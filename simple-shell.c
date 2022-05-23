@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
     while(1)
     {
-        printf("@>");
+        printf("@> ");
         fgets(line, MAXLEN, stdin);     // read line from user
         args[0] = strtok(line, " \n\t");
         int i = 1;

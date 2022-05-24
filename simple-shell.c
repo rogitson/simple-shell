@@ -47,7 +47,6 @@ void redirection(char * args[], char* inputFile, char* outputFile, int option){
 
 	if(pid==0)
     {
-        
         // Option 0: input redirection
         if (option == 0)
         {
@@ -64,8 +63,6 @@ void redirection(char * args[], char* inputFile, char* outputFile, int option){
 			close(fd);
         }
 
-		
-		
 
         // Option 2: Append
 		else if (option == 2)
@@ -85,19 +82,19 @@ void redirection(char * args[], char* inputFile, char* outputFile, int option){
 			fd = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 			dup2(fd, STDOUT_FILENO);
 			close(fd);		 
-		}
+	    }
 
-		setenv("parent",getcwd(currentDirectory, 1024),1);
-		
-		if (execvp(args[0],args)==-1)
+        setenv("parent",getcwd(currentDirectory, 1024),1);
+            
+        if (execvp(args[0],args)==-1)
         {
-			printf("%s: Redirection Command Error\n",args[0]);
-			fflush(stdout);
+            printf("%s: Redirection Command Error\n",args[0]);
+            fflush(stdout);
             kill(getpid(),SIGTERM);
-		}		 
+        }
+
 	}
 	waitpid(pid,NULL,0);
-
 }
 
 void piper(char** args)

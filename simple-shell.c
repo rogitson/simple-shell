@@ -44,12 +44,11 @@ void launch(char** args)
         return;
     }    
     else if(pid == 0)    // child code
-    {
-        if( execvp(args[0], args) == -1)
+    {   if(execvp(args[0], args) == -1) 
         {
-            printf("%s: command not found\n", args[0]);
+            printf("%s: command not found\n",args[0]);  
             fflush(stdout);
-            kill(getpid(), SIGTERM);
+            kill(getpid(),SIGTERM);
         }
     }
     else                // parent code
@@ -77,9 +76,12 @@ int main(int argc, char* argv[])
     {
         prompt();
         fgets(line, MAXLEN, stdin);     // read line from user
-        if( (args[0] = strtok(line, " \n\t")) == NULL) continue;
+        // printf("line is %s\n", line);
+        args[0] = strtok(line, " \n\t");
+        // printf("arg is %s\n", args[0]);
         int i = 1;
         while( (args[i] = strtok(NULL, " \n\t")) != NULL) ++i;
+        // printargs(args);
         execute(args);
     }
 }

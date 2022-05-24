@@ -12,10 +12,15 @@ void execute(char** args)
     if(strcmp(args[0], "exit") == 0) exit(0);
     pid_t pid;
     pid = fork();
-    if(pid < 0) return;
+    if(pid < 0) return printf("Child could not be created.\n");
     else if(pid == 0)    // child code
     {
-        execvp(args[0], args);
+        if( execvp(args[0], args) == -1)
+        {
+            printf("%s: command not found\n", args[0]);
+            fflush(stdout);
+            kill(getpid(), SIGTERM);
+        }
     }
     else                // parent code
     {
@@ -32,7 +37,7 @@ int main(int argc, char* argv[])
     {
         printf("@> ");
         fgets(line, MAXLEN, stdin);     // read line from user
-        args[0] = strtok(line, " \n\t");
+        if( (args[0] = strtok(line, " \n\t")) == NULL) continue;
         int i = 1;
         while( (args[i] = strtok(NULL, " \n\t")) != NULL) ++i;
         execute(args);

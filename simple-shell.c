@@ -36,6 +36,7 @@ void cd(char** args)
 
 void piper(char** args)
 {
+    int end = true;
     int desEven[2], desOdd[2];      // file descriptors
     int cmd_num = 1;
     char* command[256];
@@ -43,14 +44,17 @@ void piper(char** args)
     for(int i = 0; args[i] != NULL; ++i) 
         if(strcmp(args[i],"|") == 0) ++cmd_num;
 
-    for(int i = 0, cmd = 0; args[i] != NULL; ++i, ++cmd)
+    for(int i = 0, cmd = 0; end; ++i, ++cmd)
     {
         for(int j = 0; strcmp(args[i], "|") != 0; ++j)
         {
             command[j] = args[i++];
             command[j+1] = NULL;
             if(args[i] == NULL)
+            {
+                end = false;
                 break;
+            }
         }
 
         if (cmd % 2 != 0) pipe(desOdd); // for odd cmd

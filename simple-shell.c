@@ -69,6 +69,8 @@ void execute(char** args)
 
 int main(int argc, char* argv[])
 {
+    init();
+
     char line[MAXLEN];
     char* args[MAXARGS];
 
@@ -84,4 +86,6 @@ int main(int argc, char* argv[])
         // printargs(args);
         execute(args);
     }
+
+    return 0;
 }

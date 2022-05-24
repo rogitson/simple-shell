@@ -32,7 +32,11 @@ void cd(char** args)
 	if (args[1] == NULL) chdir(getenv("HOME")); 
 	// Else we change the directory to the one specified by the argument, if possible
 	else if (chdir(args[1]) == -1) printf("%s: no such directory\n", args[1]);
-	return;
+}
+
+void piper(char** args)
+{
+    printf("pipe handling coming soon.\n");
 }
 
 void launch(char** args)
@@ -59,6 +63,15 @@ void launch(char** args)
 
 void execute(char** args)
 {
+    for(int i = 0; args[i] != NULL; ++i)
+    {
+        // detect piping
+        if (strcmp(args[i],"|") == 0) 
+        {
+            piper(args);
+            return;
+        }
+    }
     if(strcmp(args[0], "exit") == 0) exit(0);
     else if(strcmp(args[0], "clear") == 0) system("clear");
     else if(strcmp(args[0], "cd") == 0)  cd(args);

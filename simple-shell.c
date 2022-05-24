@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 
 #define MAXLEN 1024
@@ -32,6 +33,11 @@ void cd(char** args)
 	if (args[1] == NULL) chdir(getenv("HOME")); 
 	// Else we change the directory to the one specified by the argument, if possible
 	else if (chdir(args[1]) == -1) printf("%s: no such directory\n", args[1]);
+}
+
+void redirection()
+{
+    return;
 }
 
 void piper(char** args)
@@ -164,21 +170,38 @@ void launch(char** args)
 
 void execute(char** args)
 {
-    for(int i = 0; args[i] != NULL; ++i)
+    char* args_aux[256];
+    for(int i = 0; args[i] != NULL; ++i)    //detect special characters
     {
         // detect piping
-        if (strcmp(args[i],"|") == 0) 
+        if (strcmp(args[i], "|") == 0) 
         {
             piper(args);
             return;
         }
+        // redirection
+        else if (strcmp(args[i], "<") == 0) 
+        {
+            redirection();
+            return;
+        }
+        else if (strcmp(args[i], ">") == 0) 
+        {
+            redirection();
+            return;
+        }
+        else if (strcmp(args[i], ">>") == 0) 
+        {
+            redirection();
+            return;
+        }
+        args_aux[i] = args[i];
     }
     if(strcmp(args[0], "exit") == 0) exit(0);
     else if(strcmp(args[0], "clear") == 0) system("clear");
     else if(strcmp(args[0], "cd") == 0)  cd(args);
     else if(strcmp(args[0], "pwd") == 0) printf("%s\n", getcwd(currentDirectory, 1024));
     else launch(args);
-    
 }
 
 int main(int argc, char* argv[])

@@ -35,9 +35,69 @@ void cd(char** args)
 	else if (chdir(args[1]) == -1) printf("%s: no such directory\n", args[1]);
 }
 
-void redirection()
-{
-    return;
+void redirection(char * args[], char* inputFile, char* outputFile, int option){
+	
+	int fd; // between 0 and 19, describing the output or input file
+	
+	if((pid=fork())==-1)
+    {
+		printf("Child process could not be created\n");
+		return;
+	}
+
+	if(pid==0)
+    {
+        
+        // Option 0: input redirection
+        if (option == 0)
+        {
+			fd = open(inputFile, O_RDONLY, 0600);  
+			dup2(fd, STDIN_FILENO);
+			close(fd); 
+		}
+
+		// Option 1: output redirection
+		else if (option == 1)
+        {
+			fd = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, 0600); 
+			dup2(fd, STDOUT_FILENO); 
+			close(fd);
+        }
+
+		
+		
+
+        // Option 2: Append
+		else if (option == 2)
+        {
+			fd = open(outputFile, O_CREAT|O_RDWR|O_APPEND , 0600); 
+			dup2(fd, STDOUT_FILENO); 
+			close(fd);
+        }
+
+        // Option 3: input and output redirection
+        else if (option == 3)
+        {
+			fd = open(inputFile, O_RDONLY, 0600);  
+			dup2(fd, STDIN_FILENO);
+			close(fd);
+
+			fd = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+			dup2(fd, STDOUT_FILENO);
+			close(fd);		 
+		}
+
+		setenv("parent",getcwd(currentDirectory, 1024),1);
+		
+		if (execvp(args[0],args)==-1)
+        {
+			printf("%s: Redirection Command Error\n",args[0]);
+			fflush(stdout);
+            kill(getpid(),SIGTERM);
+		}		 
+	}
+	waitpid(pid,NULL,0);
+
 }
 
 void piper(char** args)
@@ -170,32 +230,60 @@ void launch(char** args)
 
 void execute(char** args)
 {
-    char* args_aux[256];
+    char* cmds[256];
+
     for(int i = 0; args[i] != NULL; ++i)    //detect special characters
     {
+        // Redirection check
+        if (strcmp(args[i], "<") == 0 || strcmp(args[i], ">") == 0 ||strcmp(args[i], ">>") == 0)
+        {
+            if (args[i+1]==NULL)
+            {
+                printf("Error in Redirection\n");
+                return;
+            }
+        }
         // detect piping
         if (strcmp(args[i], "|") == 0) 
         {
             piper(args);
             return;
         }
+
         // redirection
         else if (strcmp(args[i], "<") == 0) 
         {
-            redirection();
-            return;
+
+            if (args[i+2]== NULL)  
+            {
+                redirection(cmds,args[i+1],NULL,0); // input
+                return;
+            }
+
+            else if (strcmp (args[i+2],">")==0)
+            {
+                if (args[i+3]==NULL)
+                {
+                    printf("Error in Redirection\n");
+                    return;
+                }
+                redirection(cmds,args[i+1],args[i+3],3); // input and output
+                return;
+            }
+        
         }
-        else if (strcmp(args[i], ">") == 0) 
+        else if (strcmp(args[i], ">") == 0)  // output
         {
-            redirection();
+            redirection(cmds,NULL,args[i+1],1);
             return;
         }
-        else if (strcmp(args[i], ">>") == 0) 
+        else if (strcmp(args[i], ">>") == 0) // append
         {
-            redirection();
+            redirection(cmds,NULL,args[i+1],2);
             return;
         }
-        args_aux[i] = args[i];
+        cmds[i]=args[i];
+        cmds[i+1]=NULL;    
     }
     if(strcmp(args[0], "exit") == 0) exit(0);
     else if(strcmp(args[0], "clear") == 0) system("clear");
@@ -209,7 +297,7 @@ int main(int argc, char* argv[])
     init();
 
     char line[MAXLEN];
-    char* args[MAXARGS];
+    char* args[MAXARGS]= {NULL};
 
     while(true)
     {

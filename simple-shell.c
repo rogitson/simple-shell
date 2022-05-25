@@ -15,6 +15,7 @@ char* currentDirectory;
 
 void init()
 {
+    printf("\n\n\t\t-----------------\n\t\t|  Saeed Shell  |\n\t\t-----------------\n\n");
     // Get the current directory that will be used in different methods
 	currentDirectory = (char*) calloc(1024, sizeof(char));
 }

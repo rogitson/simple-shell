@@ -16,23 +16,23 @@ char* currentDirectory;
 void init()
 {
     // Get the current directory that will be used in different methods
-	currentDirectory = (char*) calloc(1024, sizeof(char));
+    currentDirectory = (char*) calloc(1024, sizeof(char));
 }
 
 void prompt(){
-	// We print the prompt in the form "<user>@<host> <cwd> >"
-	char hostn[1204] = "";
-	gethostname(hostn, sizeof(hostn));
-	printf("%s@%s %s > ", getenv("LOGNAME"), hostn, getcwd(currentDirectory, 1024));
+    // We print the prompt in the form "<user>@<host> <cwd> >"
+    char hostn[1204] = "";
+    gethostname(hostn, sizeof(hostn));
+    printf("%s@%s %s > ", getenv("LOGNAME"), hostn, getcwd(currentDirectory, 1024));
 }
 
 
 void cd(char** args)
 {
     // If we write no path (only 'cd'), then go to the home directory
-	if (args[1] == NULL) chdir(getenv("HOME")); 
-	// Else we change the directory to the one specified by the argument, if possible
-	else if (chdir(args[1]) == -1) printf("%s: no such directory\n", args[1]);
+    if (args[1] == NULL) chdir(getenv("HOME")); 
+    // Else we change the directory to the one specified by the argument, if possible
+    else if (chdir(args[1]) == -1) printf("%s: no such directory\n", args[1]);
 }
 
 void redirection()
@@ -70,78 +70,78 @@ void piper(char** args)
         if(pid < 0) 
         {
             if (cmd != cmd_num - 1){
-				if (cmd % 2 != 0) close(desOdd[1]); // for odd cmd
-				else close(desEven[1]);             // for even cmd
-			}			
+                if (cmd % 2 != 0) close(desOdd[1]); // for odd cmd
+                else close(desEven[1]);             // for even cmd
+            }			
             printf("Child could not be created.\n");
             return;
         }    
         if(pid == 0)    // child code
         {   
             // If we are in the first command
-			if (cmd == 0)
-				dup2(desEven[1], STDOUT_FILENO);
-			// If we are in the last command, depending on whether it
-			// is placed in an odd or even position, we will replace
-			// the standard input for one pipe or another. The standard
-			// output will be untouched because we want to see the 
-			// output in the terminal
-			else if (cmd == cmd_num - 1)
+            if (cmd == 0)
+                dup2(desEven[1], STDOUT_FILENO);
+            // If we are in the last command, depending on whether it
+            // is placed in an odd or even position, we will replace
+            // the standard input for one pipe or another. The standard
+            // output will be untouched because we want to see the 
+            // output in the terminal
+            else if (cmd == cmd_num - 1)
             {
-				if (cmd_num % 2 != 0)   // for odd number of commands
-					dup2(desOdd[0], STDIN_FILENO);
-				else                    // for even number of commands
-					dup2(desEven[0], STDIN_FILENO);
-			// If we are in a command that is in the middle, we will
-			// have to use two pipes, one for input and another for
-			// output. The position is also important in order to choose
-			// which file descriptor corresponds to each input/output
-			}
+                if (cmd_num % 2 != 0)   // for odd number of commands
+                    dup2(desOdd[0], STDIN_FILENO);
+                else                    // for even number of commands
+                    dup2(desEven[0], STDIN_FILENO);
+            // If we are in a command that is in the middle, we will
+            // have to use two pipes, one for input and another for
+            // output. The position is also important in order to choose
+            // which file descriptor corresponds to each input/output
+            }
             else
             {
-				if (cmd % 2 != 0)       // for odd cmd
+                if (cmd % 2 != 0)       // for odd cmd
                 {
-					dup2(desEven[0], STDIN_FILENO); 
-					dup2(desOdd[1], STDOUT_FILENO);
-				}
+                    dup2(desEven[0], STDIN_FILENO); 
+                    dup2(desOdd[1], STDOUT_FILENO);
+                }
                 else                    // for even cmd
                 {
-					dup2(desOdd[0], STDIN_FILENO); 
-					dup2(desEven[1], STDOUT_FILENO);					
-				} 
-			}
-			
-			if(execvp(command[0], command) == -1) 
+                    dup2(desOdd[0], STDIN_FILENO); 
+                    dup2(desEven[1], STDOUT_FILENO);					
+                } 
+            }
+            
+            if(execvp(command[0], command) == -1) 
             {
-				printf("%s: command not found\n", command[0]);  
+                printf("%s: command not found\n", command[0]);  
                 fflush(stdout);
                 kill(getpid(), SIGTERM);
-			}
+            }
         }
         // parent code
         if (cmd == 0) close(desEven[1]);
-		else if (cmd == cmd_num - 1)
+        else if (cmd == cmd_num - 1)
         {
-			if (cmd_num % 2 != 0)					
-				close(desOdd[0]);
-			else				
-				close(desEven[0]);
-		}
+            if (cmd_num % 2 != 0)					
+                close(desOdd[0]);
+            else				
+                close(desEven[0]);
+        }
         else
         {
-			if (cmd % 2 != 0)
+            if (cmd % 2 != 0)
             {					
-				close(desEven[0]);
-				close(desOdd[1]);
-			}
+                close(desEven[0]);
+                close(desOdd[1]);
+            }
             else
             {					
-				close(desOdd[0]);
-				close(desEven[1]);
-			}
-		}
+                close(desOdd[0]);
+                close(desEven[1]);
+            }
+        }
 
-		waitpid(pid, NULL, 0);
+        waitpid(pid, NULL, 0);
     }
 }
 

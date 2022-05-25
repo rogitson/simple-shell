@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
 
@@ -11,15 +12,30 @@
 #define false !true
 
 void execute(char **args);
+void sigHandlerInt(int p);
 
-pid_t pid;
+pid_t pid = -10; // initialize pid to pid that is not possible
 char *currentDirectory;
+struct sigaction act_int;
 
 void init()
 {
     printf("\n\n\t\t-----------------\n\t\t|  Saeed Shell  |\n\t\t-----------------\n\n");
     // Get the current directory that will be used in different methods
     currentDirectory = (char *)calloc(1024, sizeof(char));
+
+    act_int.sa_handler = sigHandlerInt;
+    sigaction(SIGINT, &act_int, 0);
+}
+
+// Signal handler for SIGINT
+void sigHandlerInt(int p)
+{
+    // We send a SIGTERM signal to the child process
+    if (kill(pid, SIGTERM) == 0)
+        printf("\nProcess %d received a SIGINT signal\n", pid);
+    else
+        printf("\n");
 }
 
 void prompt()
@@ -89,7 +105,7 @@ void redirection(char *args[], char *inputFile, char *outputFile, int option)
             close(fd);
         }
 
-        setenv("parent", getcwd(currentDirectory, 1024), 1);
+        // setenv("parent", getcwd(currentDirectory, 1024), 1);
 
         if (execvp(args[0], args) == -1)
         {
@@ -219,6 +235,10 @@ void launch(char **args)
     }
     else if (pid == 0) // child code
     {
+        // We set the child to ignore SIGINT signals (we want the parent
+        // process to handle them with signalHandler_int)
+        signal(SIGINT, SIG_IGN);
+
         if (execvp(args[0], args) == -1)
         {
             printf("%s: command not found\n", args[0]);
@@ -227,9 +247,7 @@ void launch(char **args)
         }
     }
     else // parent code
-    {
         waitpid(pid, NULL, 0);
-    }
 }
 
 void execute(char **args)
@@ -310,14 +328,12 @@ int main(int argc, char *argv[])
     while (true)
     {
         prompt();
+        memset(line, '\0', MAXLEN); // empty line buffer
         fgets(line, MAXLEN, stdin); // read line from user
-        // printf("line is %s\n", line);
-        args[0] = strtok(line, " \n\t");
-        // printf("arg is %s\n", args[0]);
-        int i = 1;
-        while ((args[i] = strtok(NULL, " \n\t")) != NULL)
-            ++i;
-        // printargs(args);
+        if ((args[0] = strtok(line, " \n\t")) == NULL)
+            continue;
+        for (int i = 1; (args[i] = strtok(NULL, " \n\t")) != NULL; ++i)
+            ;
         execute(args);
     }
 

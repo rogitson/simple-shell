@@ -19,7 +19,7 @@ pid_t pid = -10; // initialize pid to pid that is not possible
 char *currentDirectory;
 struct sigaction act_int;
 struct sigaction act_child;
-int bProcFlag=0;
+int bProcFlag = false;
 
 void init()
 {
@@ -27,11 +27,11 @@ void init()
     // Get the current directory that will be used in different methods
     currentDirectory = (char *)calloc(1024, sizeof(char));
 
+    act_child.sa_flags = SA_RESTART;
     act_child.sa_handler = sigHandlerChild;
     act_int.sa_handler = sigHandlerInt;
     sigaction(SIGCHLD, &act_child, 0);
     sigaction(SIGINT, &act_int, 0);
-    
 }
 
 // Signal handler for SIGINT
@@ -44,12 +44,12 @@ void sigHandlerInt(int p)
         printf("\n");
 }
 
-void sigHandlerChild(int p){
-	//WNOHANG is a non blocking call that assures
+void sigHandlerChild(int p)
+{
+    //WNOHANG is a non blocking call that assures
     //no blocking happens when cleaning child processes
-	while (waitpid(-1, NULL, WNOHANG) > 0) {
-	}
-	printf("\n");
+    while (waitpid(-1, NULL, WNOHANG) > 0)
+        ;
 }
 
 void prompt()
@@ -260,27 +260,28 @@ void launch(char **args)
             kill(getpid(), SIGTERM); // kill current child
         }
     }
-    
-    if (bProcFlag == 0)
-        waitpid(pid,NULL,0);
+
+    if (!bProcFlag)
+        waitpid(pid, NULL, 0);
     else
-        printf("Background Process Created with ID %d\n",pid);
-	 
-     
+    {
+        printf("Background Process Created with ID %d\n", pid);
+        bProcFlag = false;
+    }
 }
 
 void execute(char **args)
 {
     char *cmds[256];
 
-    for (int i = 0; args[i] != NULL || bProcFlag==1; ++i) //detect special characters
+    for (int i = 0; args[i] != NULL; ++i) //detect special characters
     {
 
         //Background Process
-        if (strcmp(args[i],"&") == 0)
+        if (strcmp(args[i], "&") == 0)
         {
-            bProcFlag=1;
-            cmds[i]=NULL;
+            bProcFlag = 1;
+            cmds[i] = NULL;
             launch(cmds);
             return;
         }
